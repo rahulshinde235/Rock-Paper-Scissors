@@ -1,75 +1,82 @@
-let computerScore = 0;
-let humanScore = 0;
-const choices = ["rock", "paper", "scissors"];
+const gameState = {
+  computerScore: 0,
+  humanScore: 0,
+  roundCount: 0,
+};
+const choices = [
+  { name: "rock", symbol: "✊" },
+  { name: "paper", symbol: "✋" },
+  { name: "scissors", symbol: "✌" },
+];
 const humanScoreElem = document.getElementById("humanScore");
 const computerScoreElem = document.getElementById("computerScore");
-const gameSummary = document.getElementById("game_summary");
-console.log(humanScoreElem, computerScoreElem);
+const heading = document.querySelector(".heading");
+const originalHeading = heading.textContent;
+const computerSelection = document.querySelector("#computerSelection");
+const humanSelection = document.querySelector("#humanSelection");
+const playAgainBtn = document.querySelector(".playAgain");
+const modal = document.querySelector(".modal");
+const modalHeading = document.querySelector(".modal h2");
+const overlay = document.querySelector(".overlay");
+const rules = {
+  rock: "scissors",
+  paper: "rock",
+  scissors: "paper",
+};
 
-function updateScoreOnScreen(humanChoice, computerChoice) {
-  humanScoreElem.innerText = humanScore;
-  computerScoreElem.innerText = computerScore;
-  gameSummary.innerHTML += `<li>Your choice was ${humanChoice} and computer choice was ${computerChoice}</li>`;
+const startGame = document.getElementById("startGame");
+
+function updateScoreOnScreen(humanChoice = null, computerChoice = null) {
+  humanScoreElem.innerText = gameState.humanScore;
+  computerScoreElem.innerText = gameState.computerScore;
+
+  humanSelection.textContent = humanChoice?.symbol ?? "❔";
+  computerSelection.textContent = computerChoice?.symbol ?? "❔";
+  if (gameState.roundCount == 5) {
+    const winner =
+      gameState.computerScore > gameState.humanScore ? "Computer" : "You";
+    heading.textContent = `${winner} won`;
+    modalHeading.textContent = `${winner} won`;
+    modal.classList.add("active");
+    overlay.classList.add("active");
+  }
 }
 
-function getComputerChoice(min, max) {
-  const randomNum = Math.floor(min + Math.random() * (max - min + 1));
-  return choices[randomNum];
+function getComputerChoice() {
+  const randomIndex = Math.floor(Math.random() * choices.length);
+  return choices[randomIndex];
 }
 
-function getHumanChoice() {
-  const userInput = prompt(
-    "Please enter your choice for Rock Paper Scissors as text"
-  )
-    .toLowerCase()
-    .trim();
-  return userInput;
-}
 function playRound(humanChoice, computerChoice) {
-  console.log({ humanChoice, computerChoice });
-
   if (humanChoice === computerChoice) {
-    humanScore++;
-    computerScore++;
-  }
-
-  if (humanChoice === "rock" && computerChoice === "paper") {
-    humanScore--;
-    computerScore++;
-  }
-  if (computerChoice === "rock" && humanChoice === "paper") {
-    humanScore++;
-    computerScore--;
-  }
-  if (humanChoice === "scissors" && computerChoice === "rock") {
-    humanScore--;
-    computerScore++;
-  }
-  if (computerChoice === "scissors" && humanChoice === "rock") {
-    humanScore++;
-    computerScore--;
-  }
-
-  if (humanChoice === "paper" && computerChoice === "scissors") {
-    humanScore--;
-    computerScore++;
-  }
-  if (computerChoice === "paper" && humanChoice === "scissors") {
-    humanScore++;
-    computerScore--;
-  }
-
-  //rock defeats sci
-  //sci defeats paper
-  //paper defeats rock
-  updateScoreOnScreen(humanChoice, computerChoice);
-}
-
-function playGame(numOfRounds) {
-  for (let index = 1; index <= numOfRounds; index++) {
-    playRound(getHumanChoice(), getComputerChoice(0, 2));
+    gameState.humanScore++;
+    gameState.computerScore++;
+  } else if (rules[humanChoice] === computerChoice) {
+    gameState.humanScore++;
+  } else {
+    gameState.computerScore++;
   }
 }
 
-const userInput = parseInt(prompt("How many rounds do you want to play?"));
-playGame(userInput);
+const actions = document.querySelector(".action_section");
+
+actions.addEventListener("click", (e) => {
+  const humanChoiceName = e.target.getAttribute("data-value");
+  const humanChoice = choices.find((choice) => choice.name === humanChoiceName);
+
+  const computerChoice = getComputerChoice();
+  if (gameState.roundCount < 5) {
+    gameState.roundCount += 1;
+    playRound(humanChoice.name, computerChoice.name);
+    updateScoreOnScreen(humanChoice, computerChoice);
+  }
+});
+
+playAgainBtn.addEventListener("click", () => {
+  modal.classList.remove("active");
+  overlay.classList.remove("active");
+  heading.textContent = originalHeading;
+  modalHeading.textContent = "";
+  Object.assign(gameState, { humanScore: 0, computerScore: 0, roundCount: 0 });
+  updateScoreOnScreen();
+});
